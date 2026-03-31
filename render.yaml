@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: landing-page-analyzer
+    runtime: node
+    buildCommand: "cd backend && npm install && cd ../frontend && npm install && npm run build"
+    startCommand: "cd backend && node server.js"
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
+        value: false

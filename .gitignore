@@ -1,0 +1,9 @@
+node_modules/
+dist/
+backend/reports/
+.env
+*.log
+backup-landing-analyzer/
+competitor-backend/
+competitor-frontend/
+.claude/
