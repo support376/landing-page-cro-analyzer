@@ -2,10 +2,9 @@
   "name": "landing-page-cro-analyzer",
   "version": "1.0.0",
   "private": true,
-  "scripts": {
-    "install:all": "cd backend && npm install && cd ../frontend && npm install",
-    "build": "cd frontend && npm run build",
-    "start": "cd backend && node server.js",
-    "dev": "concurrently \"cd backend && node server.js\" \"cd frontend && npx vite --port 3000\""
+  "type": "commonjs",
+  "dependencies": {
+    "@sparticuz/chromium": "^143.0.4",
+    "puppeteer-core": "^24.40.0"
   }
 }

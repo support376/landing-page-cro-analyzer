@@ -7,3 +7,5 @@ backup-landing-analyzer/
 competitor-backend/
 competitor-frontend/
 .claude/
+
+.vercel

@@ -5,13 +5,14 @@ import SectionCard from './SectionCard'
 
 const TABS = ['개요', '퍼스트뷰', '설득구조', '카피라이팅', '기술&UX', '개선안', '경쟁사']
 
-export default function Dashboard({ data, analysisId, onReset }) {
+export default function Dashboard({ data, onReset }) {
   const [activeTab, setActiveTab] = useState('개요')
   const [previewDevice, setPreviewDevice] = useState('desktop')
   const scoring = data.scoring || {}
   const scores = scoring.scores || {}
   const weights = scoring.weights || {}
-  const screenshotUrl = (name) => `/reports/${analysisId}/${name}`
+  const ss = data.screenshots || {}
+  const getScreenshot = (device) => device === 'desktop' ? ss.desktopFull : device === 'tablet' ? (ss.tablet || ss.mobile) : ss.mobile
   const scoreLabels = {headline:'헤드라인',cta:'CTA',copywriting:'카피라이팅',structure:'설득 구조',socialProof:'사회적 증거',mobile:'모바일',speed:'로딩 속도',ux:'UX'}
 
   return (
@@ -26,14 +27,14 @@ export default function Dashboard({ data, analysisId, onReset }) {
         </div>
         <div className="flex-1 overflow-auto bg-slate-900 p-4 flex justify-center">
           <div style={{maxWidth:previewDevice==='desktop'?'100%':previewDevice==='tablet'?'768px':'375px'}}>
-            {data.screenshots&&(<img src={screenshotUrl(previewDevice==='desktop'?data.screenshots.desktopFull:previewDevice==='tablet'?data.screenshots.tablet:data.screenshots.mobile)} alt="미리보기" className="w-full rounded-lg shadow-2xl"/>)}
+            {data.screenshots&&(<img src={getScreenshot(previewDevice)} alt="미리보기" className="w-full rounded-lg shadow-2xl"/>)}
           </div>
         </div>
       </div>
       <div className="flex-1 flex flex-col overflow-hidden">
         <div className="flex gap-1 p-2 bg-slate-800 border-b border-slate-700 overflow-x-auto">
           {TABS.map(tab=>(<button key={tab} onClick={()=>setActiveTab(tab)} className={`px-3 py-2 text-sm rounded-lg whitespace-nowrap ${activeTab===tab?'bg-blue-600 text-white':'text-slate-400 hover:text-white hover:bg-slate-700'}`}>{tab}</button>))}
-          <a href={`/reports/${analysisId}/report.pdf`} download className="ml-auto px-3 py-2 text-sm rounded-lg bg-purple-600 text-white hover:bg-purple-500">PDF 다운로드</a>
+          <button onClick={()=>window.print()} className="ml-auto px-3 py-2 text-sm rounded-lg bg-purple-600 text-white hover:bg-purple-500">인쇄/PDF</button>
         </div>
         <div className="flex-1 overflow-y-auto p-5 space-y-5">
           {activeTab==='개요'&&(<>
@@ -64,7 +65,7 @@ export default function Dashboard({ data, analysisId, onReset }) {
             <SectionCard title="CTA 버튼" icon="👆" color="green">
               {data.firstView?.ctaButton?(<div className="space-y-3"><div className="px-6 py-3 rounded-lg font-semibold inline-block" style={{backgroundColor:data.firstView.ctaButton.backgroundColor,color:data.firstView.ctaButton.color}}>{data.firstView.ctaButton.text}</div><div className="grid grid-cols-2 gap-2 text-sm text-slate-400"><div>배경색: <span className="text-white">{data.firstView.ctaButton.backgroundColor}</span></div><div>텍스트색: <span className="text-white">{data.firstView.ctaButton.color}</span></div><div>크기: <span className="text-white">{data.firstView.ctaButton.width}x{data.firstView.ctaButton.height}px</span></div><div>위치: <span className="text-white">Y {data.firstView.ctaButton.positionY}px</span></div></div></div>):<div className="text-red-400 text-sm">퍼스트뷰에서 CTA 버튼을 찾을 수 없습니다</div>}
             </SectionCard>
-            {data.screenshots?.firstView&&<SectionCard title="퍼스트뷰 스크린샷" icon="👁️" color="purple"><img src={screenshotUrl(data.screenshots.firstView)} alt="퍼스트뷰" className="w-full rounded-lg"/><div className="mt-2 text-sm text-slate-400">로딩: {((data.loadTime||0)/1000).toFixed(2)}초</div></SectionCard>}
+            {ss.firstView&&<SectionCard title="퍼스트뷰 스크린샷" icon="👁️" color="purple"><img src={ss.firstView} alt="퍼스트뷰" className="w-full rounded-lg"/><div className="mt-2 text-sm text-slate-400">로딩: {((data.loadTime||0)/1000).toFixed(2)}초</div></SectionCard>}
           </>)}
           {activeTab==='설득구조'&&(<>
             <SectionCard title="섹션 구조" icon="🏗️" color="blue"><div className="space-y-2">{(data.structure?.sectionMap||[]).map((sec,i)=>{const tc={'social-proof':'bg-green-500/20 text-green-400 border-green-500/30','faq':'bg-blue-500/20 text-blue-400 border-blue-500/30','benefits':'bg-purple-500/20 text-purple-400 border-purple-500/30','features':'bg-yellow-500/20 text-yellow-400 border-yellow-500/30','urgency':'bg-red-500/20 text-red-400 border-red-500/30','general':'bg-slate-700/30 text-slate-400 border-slate-600/30'};return(<div key={i} className={`${tc[sec.type]||tc.general} border rounded-lg px-4 py-2 flex items-center gap-3`}><span className="text-xs text-slate-500 w-6">#{i+1}</span><span className="flex-1 text-sm font-medium">{sec.heading||'(제목 없음)'}</span><span className="text-xs px-2 py-0.5 rounded-full bg-slate-800">{sec.type}</span></div>)})}</div></SectionCard>

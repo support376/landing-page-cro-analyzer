@@ -5,7 +5,6 @@ import Dashboard from './components/Dashboard'
 import LoadingScreen from './components/LoadingScreen'
 
 function App() {
-  const [analysisId, setAnalysisId] = useState(null)
   const [analysisData, setAnalysisData] = useState(null)
   const [loading, setLoading] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -15,52 +14,48 @@ function App() {
   const startAnalysis = async (url, competitors) => {
     setLoading(true)
     setError(null)
-    setProgress(0)
-    setStatusText('분석을 시작합니다...')
+    setProgress(10)
+    setStatusText('페이지를 크롤링하고 있습니다...')
+
+    // 프로그레스 시뮬레이션
+    const progressTimer = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 85) { clearInterval(progressTimer); return 85 }
+        const step = prev < 30 ? 8 : prev < 60 ? 5 : 2
+        const texts = { 20: '스크린샷을 캡처하고 있습니다...', 40: '콘텐츠를 분석하고 있습니다...', 60: '점수를 계산하고 있습니다...', 75: '개선안을 생성하고 있습니다...' }
+        if (texts[prev]) setStatusText(texts[prev])
+        return prev + step
+      })
+    }, 1500)
+
     try {
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url, competitors })
       })
-      const { id } = await res.json()
-      setAnalysisId(id)
-      const poll = setInterval(async () => {
-        try {
-          const statusRes = await fetch(`/api/analyze/${id}`)
-          const statusData = await statusRes.json()
-          setProgress(statusData.progress || 0)
-          const statusMap = {
-            crawling: '페이지를 크롤링하고 있습니다...',
-            analyzing: '콘텐츠를 분석하고 있습니다...',
-            'generating-report': 'PDF 리포트를 생성하고 있습니다...',
-            complete: '분석이 완료되었습니다!',
-            error: '오류가 발생했습니다'
-          }
-          setStatusText(statusMap[statusData.status] || statusData.status)
-          if (statusData.status === 'complete') {
-            clearInterval(poll)
-            setAnalysisData(statusData.data)
-            setLoading(false)
-          } else if (statusData.status === 'error') {
-            clearInterval(poll)
-            setError(statusData.error || '분석 중 오류가 발생했습니다')
-            setLoading(false)
-          }
-        } catch {
-          clearInterval(poll)
-          setError('서버와의 연결이 끊어졌습니다')
-          setLoading(false)
-        }
-      }, 2000)
-    } catch {
-      setError('서버에 연결할 수 없습니다. 백엔드가 실행 중인지 확인하세요.')
+      clearInterval(progressTimer)
+
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || '분석 중 오류가 발생했습니다')
+      }
+
+      const result = await res.json()
+      setProgress(100)
+      setStatusText('분석이 완료되었습니다!')
+      setTimeout(() => {
+        setAnalysisData(result.data)
+        setLoading(false)
+      }, 500)
+    } catch (err) {
+      clearInterval(progressTimer)
+      setError(err.message || '서버에 연결할 수 없습니다')
       setLoading(false)
     }
   }
 
   const reset = () => {
-    setAnalysisId(null)
     setAnalysisData(null)
     setLoading(false)
     setProgress(0)
@@ -76,7 +71,7 @@ function App() {
         <LoadingScreen progress={progress} statusText={statusText} />
       )}
       {analysisData && (
-        <Dashboard data={analysisData} analysisId={analysisId} onReset={reset} />
+        <Dashboard data={analysisData} onReset={reset} />
       )}
     </div>
   )
